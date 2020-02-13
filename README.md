@@ -36,7 +36,7 @@ To extract noun phrases out of a document text use [our noun-phrase extractor av
 This will train the model.
 Once the model is trained you can save it using pickle or joblib.
 This model can be used in two ways:
- #1. To score a sentence, phrase or word
+ # 1. To score a sentence, phrase or word
  For this we use the following code.
  
  ```python
@@ -45,7 +45,7 @@ This model can be used in two ways:
  phrase_score = psvectorizer.get_score(['a tokenized phrase']) # if was trained using noun phrases
  ```
  
- #2. To get a vector representation of a given text snippet.
+ # 2. To get a vector representation of a given text snippet.
 
 ```python
 # Firstly a document is fitted
