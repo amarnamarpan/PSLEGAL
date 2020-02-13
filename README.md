@@ -33,6 +33,28 @@ nonlegal_tokenized_documents = [['the data','data','20 different newsgroups','di
 
 To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
 
+This will train the model.
+Once the model is trained you can save it using pickle or joblib.
+This model can be used in two ways:
+ #1. To score a sentence, phrase or word
+ For this we use the following code.
+ 
+ ```python
+ phrase_score = psvectorizer.get_score(['a','tokenized','phrase']) # if was trained using tokenized words
+ # OR
+ phrase_score = psvectorizer.get_score(['a tokenized phrase']) # if was trained using noun phrases
+ ```
+ 
+ #2. To get a vector representation of a given text snippet.
+
+```python
+# Firstly a document is fitted
+psvectorizer.fit_doc(tokenized_document)
+# Secondly any given text is converted to a numerical vector
+vector = psvectorizer.transform(tokenized_document)
+```
+
+
 If you use this code in your work, please consider going through our original paper:
 [Automatic Catchphrase Identification from Legal Court Case Documents, by A Mandal, K Ghosh, A Pal, S Ghosh at CIKM, 2017](https://dl.acm.org/doi/10.1145/3132847.3133102)
 
