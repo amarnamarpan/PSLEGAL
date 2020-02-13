@@ -19,7 +19,7 @@ psvectorizer = psl.PSlegalVectorizer()
 psvectorizer.fit(self, legal_tokenized_documents, nonlegal_tokenized_documents)
 ```
 Please note that pslegal is a scoring function. It does score the words/noun-phrases presented to it. 
-NOTE: To score noun phrases you need to provide noun phrases instead of tokenized words to the algorithm.
+NOTE: To score noun phrases you need to provide noun phrases instead of tokenized words to the algorithm. To do so, we pass the following two lists as shown:
 For example,
 
 ```python
@@ -29,4 +29,10 @@ legal_tokenized_documents = [['law reports','reporters','series','series of book
 
 nonlegal_tokenized_documents = [['the data','data','20 different newsgroups','different newsgroups','newsgroups','a different topic','different topic', 'topic'],
 ] #one non-legal document
+```
+
+To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
+
+If you use this code in your work, please consider going through our original paper:
+[Automatic Catchphrase Identification from Legal Court Case Documents, by A Mandal, K Ghosh, A Pal, S Ghosh at CIKM, 2017](https://dl.acm.org/doi/10.1145/3132847.3133102)
 
