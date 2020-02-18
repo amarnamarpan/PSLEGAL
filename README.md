@@ -1,7 +1,7 @@
 # PSLEGAL
 A unsupervised way of legal catchphrase extraction.
-
 Keep the pslegal.py file in your current working directory and use the functions as described below.
+# To train the model
 The model first needs a text corpus to be trained upon.
 The text corpus is sent as a list of tokenized documents. Each term in the token is either a noun phrase or a word. To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
 
