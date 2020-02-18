@@ -2,7 +2,8 @@
 A unsupervised way of legal catchphrase extraction.
 
 Keep the pslegal.py file in your current working directory and use the functions as described below.
-The model first needs a set of tokenized text corpus.
+The model first needs a text corpus to be trained upon.
+The text corpus is sent as a list of tokenized documents. Each term in the token is either a noun phrase or a word. To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
 
 ```python
 import pslegal as psl
@@ -33,7 +34,7 @@ nonlegal_tokenized_documents = [['the data','data','20 different newsgroups','di
 ] #one non-legal document
 ```
 
-To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
+
 
 This will train the model.
 Once the model is trained you can save it using pickle or joblib.
