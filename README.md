@@ -42,6 +42,10 @@ This model can be used in two ways:
  For this we use the following code.
  
  ```python
+ # Firstly a document is fitted
+ psvectorizer.fit_doc(tokenized_document)
+ 
+ #Then we use
  phrase_score = psvectorizer.get_score(['a','tokenized','phrase']) # if was trained using tokenized words
  # OR
  phrase_score = psvectorizer.get_score(['a tokenized phrase']) # if was trained using noun phrases
