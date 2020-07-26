@@ -51,13 +51,11 @@ This model can be used in two ways:
  phrase_score = psvectorizer.get_score(['a tokenized phrase']) # if was trained using noun phrases
  ```
  
- ## To get a vector representation of a given text snippet.
+ ## To get a vector representation of a given text snippets or documents.
 
 ```python
-# Firstly a document is fitted
-psvectorizer.fit_doc(tokenized_document)
-# Secondly any given text is converted to a numerical vector
-vector = psvectorizer.transform(tokenized_document)
+# A given list of tokenized text is converted to numpy arrays of numerical vectors
+vector = psvectorizer.transform(tokenized_documents)
 ```
 
 ## Reference
