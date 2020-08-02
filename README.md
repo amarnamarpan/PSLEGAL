@@ -2,7 +2,7 @@
 Keep the pslegal.py file in your current working directory and use the functions as described below.
 ## To train the model
 The model first needs a text corpus to be trained upon.
-The text corpus is sent as a list of tokenized documents. Each term in the token is either a noun phrase or a word or a n-gram. To extract words or n-grams you can use your own tokenizer or use the one built in NLTK. To extract noun phrases out of a document text you can use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
+The text corpus is sent as a list of tokenized documents. Each term in the token is either a word or a n-gram or a noun phrase. To extract words or n-grams you can use your own tokenizer or use the one built in NLTK. To extract noun phrases out of a document text you can use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
 
 ```python
 import pslegal as psl
@@ -37,7 +37,7 @@ nonlegal_tokenized_documents = [['the data','data','20 different newsgroups','di
 
 This will train the model.
 Once the model is trained you can save it using pickle or joblib.
-This model can be used in two ways:
+This trained model can be used in two ways:
  ## To score a sentence, phrase or word
  For this we use the following code.
  
@@ -59,6 +59,6 @@ vector = psvectorizer.transform(tokenized_documents)
 ```
 
 ## Reference
-If you use this code in your work, please cite our original paper:
+Thank you for using this code in your work, please cite our original paper:
 [Automatic Catchphrase Identification from Legal Court Case Documents, by A Mandal, K Ghosh, A Pal, S Ghosh at CIKM, 2017](https://dl.acm.org/doi/10.1145/3132847.3133102)
 
