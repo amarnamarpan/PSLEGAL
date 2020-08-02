@@ -2,7 +2,7 @@
 Keep the pslegal.py file in your current working directory and use the functions as described below.
 ## To train the model
 The model first needs a text corpus to be trained upon.
-The text corpus is sent as a list of tokenized documents. Each term in the token is either a noun phrase or a word. To extract noun phrases out of a document text use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
+The text corpus is sent as a list of tokenized documents. Each term in the token is either a noun phrase or a word or a n-gram. To extract words or n-grams you can use your own tokenizer or use the one built in NLTK. To extract noun phrases out of a document text you can use [our noun-phrase extractor available in Python.](https://github.com/amarnamarpan/NNP-extractor).
 
 ```python
 import pslegal as psl
