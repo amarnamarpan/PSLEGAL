@@ -291,7 +291,7 @@ leg_terms = [
 'Claimant',
 'Class action',
 'Clause',
-'Clayton\'s Case',
+'Clayton’s Case',
 'Clearing bank',
 'Clerk to the Justices',
 'Close company',
@@ -648,7 +648,7 @@ leg_terms = [
 'Kerb crawling',
 'Kidnap',
 'Kin',
-'King\'s Inns',
+'King’s Inns',
 'Knock for knock',
 'Knock-for-knock',
 'Knowhow',
@@ -1190,243 +1190,344 @@ leg_terms = [
 ]
 
 leg_terms = [tr.lower() for tr in leg_terms]
+cf_start_time = timeit.default_timer()
+
+import os
+import tokenize as sentencify
+import extract_noun_phrases as npe
 
 class PSlegalVectorizer:
 
-	def __init__(self, version=2):
-		self.legalcf = {}
-		self.legalidf = {}
-		self.nonlegalcf = {}
-		self.nonlegalidf = {}
-		self.ver = 2
-		if version>2:
-			self.ver = 2
-			print('\n\tWarning:: version can only be either 1 or 2. \n\tContinuing with latest version 2..\n')
-		elif version==1:
-			self.ver=1
-		self.domain_specific_importance = {}
-		self.vocab=[]
-		self.term_scores = {}
+    def __init__(self, version=2):
+        self.legalcf = {}
+        self.legalidf = {}
+        self.nonlegalcf = {}
+        self.nonlegalidf = {}
+        self.legaldf={}
+        self.nonlegaldf={}
+        self.ver = 2
+        if version>2:
+            self.ver = 2
+            print('\n\tWarning:: version can only be either 1 or 2. \n\tContinuing with latest version 2..\n')
+        elif version==1:
+            self.ver=1
+        self.domain_specific_importance = {}
+        self.vocab=[]
+        self.term_scores = {}
 
 
-	def vocabulary(self):
-		return self.vocab
+    def vocabulary(self):
+        return self.vocab
 
-	def term_frequency(self, term, tokenized_document, normalize=False):
-		if normalize:
-			return float(tokenized_document.count(term))/len(set(tokenized_document))
-		return float(tokenized_document.count(term))
+    def term_frequency(self, term, tokenized_document, normalize=False):
+        if normalize:
+            return float(tokenized_document.count(term))/len(set(tokenized_document))
+        return float(tokenized_document.count(term))
 
-	def sublinear_term_frequency(self, term, tokenized_document, normalize=False):
-		if normalize:
-			count = tokenized_document.count(term)/len(set(tokenized_document))
-		else:
-			count = tokenized_document.count(term)/len(set(tokenized_document))
-		if count == 0:
-			return 0
-		return 1 + math.log1p(count)
+    def sublinear_term_frequency(self, term, tokenized_document, normalize=False):
+        if normalize:
+            count = tokenized_document.count(term)/len(set(tokenized_document))
+        else:
+            count = tokenized_document.count(term)/len(set(tokenized_document))
+        if count == 0:
+            return 0
+        return 1 + math.log1p(count)
 
-	def augmented_term_frequency(self, term, tokenized_document):
-		max_count = max([term_frequency(t, tokenized_document) for t in tokenized_document])
-		return (0.5 + ((0.5 * term_frequency(term, tokenized_document))/max_count))
+    def augmented_term_frequency(self, term, tokenized_document):
+        max_count = max([term_frequency(t, tokenized_document) for t in tokenized_document])
+        return (0.5 + ((0.5 * term_frequency(term, tokenized_document))/max_count))
 
-	def inverse_document_frequencies(self, tokenized_documents):
-		idf_start_time = timeit.default_timer()
-		idf_values = {}
-		all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
-		self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
-		vocabsize = len(all_tokens_set)
-		ctr=1
-		for tkn in all_tokens_set:
-			sys.stdout.write('\r')
-			sys.stdout.write('IDF for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - idf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
-			sys.stdout.flush()
-			ctr+=1
-			contains_token = map(lambda doc: tkn in doc, tokenized_documents)
-			idf_values[tkn] = 1 + math.log1p(len(tokenized_documents)/(sum(contains_token)))
-		return idf_values
+    def inverse_document_frequencies(self, tokenized_documents):
+        idf_start_time = timeit.default_timer()
+        idf_values = {}
+        all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
+        self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
+        vocabsize = len(all_tokens_set)
+        ctr=1
+        for tkn in all_tokens_set:
+            sys.stdout.write('\r')
+            sys.stdout.write('IDF for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - idf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
+            sys.stdout.flush()
+            ctr+=1
+            contains_token = map(lambda doc: tkn in doc, tokenized_documents)
+            idf_values[tkn] = 1 + math.log1p(len(tokenized_documents)/(sum(contains_token)))
+        return idf_values
 
-	def collection_frequencies(self, tokenized_documents, normalize=False):
-		cf_start_time = timeit.default_timer()
-		cf_values = {}
-		n_docs = len(tokenized_documents)
-		all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
-		self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
-		vocabsize = len(all_tokens_set)
-		superset = []
-		for each in tokenized_documents:
-			superset.extend(each)
-		del tokenized_documents
-		ctr=1
-		for tkn in all_tokens_set:
-			sys.stdout.write('\r')
-			sys.stdout.write('CF for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
-			sys.stdout.flush()
-			ctr+=1
-			cf_values[tkn] = superset.count(tkn)
-			if normalize:
-				cf_values[tkn] = cf_values[tkn] / n_docs
-		return cf_values
+    def collection_frequencies(self, tokenized_documents, normalize=False):
+        cf_start_time = timeit.default_timer()
+        cf_values = {}
+        n_docs = len(tokenized_documents)
+        all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
+        self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
+        vocabsize = len(all_tokens_set)
+        superset = []
+        for each in tokenized_documents:
+            superset.extend(each)
+        del tokenized_documents
+        ctr=1
+        for tkn in all_tokens_set:
+            sys.stdout.write('\r')
+            sys.stdout.write('CF for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
+            sys.stdout.flush()
+            ctr+=1
+            cf_values[tkn] = superset.count(tkn)
+            if normalize:
+                cf_values[tkn] = cf_values[tkn] / n_docs
+        return cf_values
 
-	def calculate_frequencies(self,tokenized_documents, normalize=False):
-		cf_start_time = timeit.default_timer()
-		cf_values = {}
-		df_values = {}
-		idf_values={}
-		n_docs = len(tokenized_documents)
-		all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
-		self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
-		vocabsize = len(all_tokens_set)
-		for each in all_tokens_set:
-			cf_values[each] = 0.0
-			df_values[each] = 0.0
-			idf_values[each] = 0.0
-		ctr=1
-		for doc in tokenized_documents:
-			df_words = list(set(doc))
-			for each in df_words:
-				df_values[each] += 1
-			for each in doc:
-				cf_values[each] += 1
-			sys.stdout.write('\r')
-			sys.stdout.write('Calculating CF and IDF '+str((ctr*100.0)/n_docs)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (n_docs-ctr))[:5]+'  minutes)')
-			sys.stdout.flush()
-			ctr+=1
-		for each in df_values:
-			idf_values[each] = 1 + math.log1p(n_docs/(df_values[each]))
-		if normalize:
-			for each in cf_values:
-				cf_values[each] = cf_values[each]/n_docs
-		return (idf_values,cf_values)
+    def calculate_frequencies(self,tokenized_documents, normalize=False):
+        cf_start_time = timeit.default_timer()
+        cf_values = {}
+        df_values = {}
+        idf_values={}
+        n_docs = len(tokenized_documents)
+        # all_tokens_set=set([])
+        # for sublist in tokenized_documents:
+        #     print(type(sublist[0]),type(sublist),type(tokenized_documents))
+        #     print(len(sublist[0]),len(sublist),len(tokenized_documents))
+        #     all_tokens_set.union(set(sublist))
+        all_tokens_set = set([item for sublist in tokenized_documents for item in sublist])
+        self.vocab = list(set(all_tokens_set).union(set(self.vocab)))
+        vocabsize = len(all_tokens_set)
+        for each in all_tokens_set:
+            cf_values[each] = 0.0
+            df_values[each] = 0.0
+            idf_values[each] = 0.0
+        ctr=1
+        for doc in tokenized_documents:
+            df_words = list(set(doc))
+            for each in df_words:
+                df_values[each] += 1
+            for each in doc:
+                cf_values[each] += 1
+            sys.stdout.write('\r')
+            sys.stdout.write('Calculating CF and IDF '+str((ctr*100.0)/n_docs)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (n_docs-ctr))[:5]+'  minutes)    ')
+            sys.stdout.flush()
+            ctr+=1
+        for each in df_values:
+            idf_values[each] = 1 + math.log1p(n_docs/(df_values[each]))
+        if normalize:
+            for each in cf_values:
+                cf_values[each] = cf_values[each]/n_docs
+        return (idf_values,cf_values)
 
-	def tfidf(self, tokenized_documents):
-		tfidf_documents = []
-		for document in tokenized_documents:
-			doc_tfidf = []
-			for term in self.legalidf.keys():
-				tf = sublinear_term_frequency(term, document)
-				doc_tfidf.append(tf * idf[term])
-			tfidf_documents.append(doc_tfidf)
-		return tfidf_documents
+    def update_frequencies(self, toks, mode='legal', normalize=False):
+        self.vocab = list(set(toks).union(set(self.vocab)))
+        df_words = list(set(toks))
+        for each in df_words:
+            if not each in self.legaldf:
+                self.legaldf[each] = 0.0
+            if not each in self.legalcf:
+                self.legalcf[each] = 0.0
+        for each in df_words:
+            self.legaldf[each] += 1
+        for each in toks:
+            self.legalcf[each] += 1
+        return
 
-	def KLI(self, tokenized_documents):
-		KLI_documents = []
-		for document in tokenized_documents:
-			doc_KLI = []
-			for term in self.legalidf.keys():
-				doc_KLI.append(0.0)
-			doc_KLI = np.array(doc_KLI)
-			for ind,term in enumerate(self.legalidf.keys()):
-				tf = self.term_frequency(term, document, normalize=True)
-				if tf!=0:
-					doc_KLI[ind] = tf *(math.log1p(tf / (self.legalcf[term] + 1.0)))
-			KLI_documents.append(doc_KLI)
-		return np.array(KLI_documents)
+    def tfidf(self, tokenized_documents):
+        tfidf_documents = []
+        for document in tokenized_documents:
+            doc_tfidf = []
+            for term in self.legalidf.keys():
+                tf = sublinear_term_frequency(term, document)
+                doc_tfidf.append(tf * idf[term])
+            tfidf_documents.append(doc_tfidf)
+        return tfidf_documents
 
-	def transform(self, tokenized_documents):
-		kli = self.KLI(tokenized_documents)
-		importance = self.domain_specific_importance
-		pscore_documents = []
-		row_ind=0
-		for document in tokenized_documents:
-			doc_pscore = []
-			col_ind=0
-			for term in self.legalidf.keys():
-				doc_pscore.append(0.0)
-			doc_pscore = np.array(doc_pscore)
-			for ind,term in enumerate(self.legalidf.keys()):
-				tf = self.term_frequency(term, document, normalize=True)
-				if tf!=0:
-					doc_pscore[ind] = kli[row_ind][col_ind] * importance[term]
-				col_ind+=1
-			pscore_documents.append(doc_pscore)
-			row_ind+=1
-		return np.array(pscore_documents)
+    def KLI(self, tokenized_documents):
+        KLI_documents = []
+        for document in tokenized_documents:
+            doc_KLI = []
+            for term in self.legalidf.keys():
+                doc_KLI.append(0.0)
+            doc_KLI = np.array(doc_KLI)
+            for ind,term in enumerate(self.legalidf.keys()):
+                tf = self.term_frequency(term, document, normalize=True)
+                if tf!=0:
+                    doc_KLI[ind] = tf *(math.log1p(tf / (self.legalcf[term] + 1.0)))
+            KLI_documents.append(doc_KLI)
+        return np.array(KLI_documents)
 
-	def fit_doc(self, tokenized_document):
-		kli = self.KLI([tokenized_document])[0]
-		doc_pscore = []
-		self.term_scores={}
-		col_ind=0
-		for term in self.legalidf.keys():
-			doc_pscore.append(0.0)
-		doc_pscore = np.array(doc_pscore)
-		for ind,term in enumerate(self.legalidf.keys()):
-			tf = self.term_frequency(term, tokenized_document, normalize=True)
-			score=0
-			if tf!=0:
-				score = kli[ind] * self.domain_specific_importance[term]
-				doc_pscore[ind] = score
-			self.term_scores[term] = score
-			del score
-		return self.term_scores
+    def transform(self, tokenized_documents):
+        kli = self.KLI(tokenized_documents)
+        importance = self.domain_specific_importance
+        pscore_documents = []
+        row_ind=0
+        for document in tokenized_documents:
+            doc_pscore = []
+            col_ind=0
+            for term in self.legalidf.keys():
+                doc_pscore.append(0.0)
+            doc_pscore = np.array(doc_pscore)
+            for ind,term in enumerate(self.legalidf.keys()):
+                tf = self.term_frequency(term, document, normalize=True)
+                if tf!=0:
+                    doc_pscore[ind] = kli[row_ind][col_ind] * importance[term]
+                col_ind+=1
+            pscore_documents.append(doc_pscore)
+            row_ind+=1
+        return np.array(pscore_documents)
 
-	def get_score(self, tokenized_phrase):
-		score = 0.0
-		l_imp = 0.0
-		phrase = ' '.join(tokenized_phrase)
-		for ltr in leg_terms:
-			if ltr in phrase:
-				l_imp+=1
-		l_imp = 1.0+math.log1p(l_imp)
-		for tok in tokenized_phrase:
-			if self.term_scores.has_key(tok):
-				score += self.term_scores[tok]
-		score = score/len(tokenized_phrase)
-		return score*l_imp
+    def fit_doc(self, tokenized_document):
+        kli = self.KLI([tokenized_document])[0]
+        doc_pscore = []
+        self.term_scores={}
+        col_ind=0
+        for term in self.legalidf.keys():
+            doc_pscore.append(0.0)
+        doc_pscore = np.array(doc_pscore)
+        for ind,term in enumerate(self.legalidf.keys()):
+            tf = self.term_frequency(term, tokenized_document, normalize=True)
+            score=0
+            if tf!=0:
+                score = kli[ind] * self.domain_specific_importance[term]
+                doc_pscore[ind] = score
+            self.term_scores[term] = score
+            del score
+        return self.term_scores
 
-	def fit(self, legal_tokenized_documents, nonlegal_tokenized_documents):
-		print ('\nstarted calculating legal frequencies...')
-		(self.legalidf , self.legalcf ) = self.calculate_frequencies(legal_tokenized_documents, normalize=True)
-		print ('\nstarted calculating nonlegal frequencies...')
-		(self.nonlegalidf , self.nonlegalcf ) = self.calculate_frequencies(nonlegal_tokenized_documents, normalize=True)
+    def get_score(self, tokenized_phrase):
+        score = 0.0
+        l_imp = 0.0
+        phrase = ' '.join(tokenized_phrase)
+        for ltr in leg_terms:
+            if ltr in phrase:
+                l_imp+=1
+        l_imp = 1.0+math.log1p(l_imp)
+        for tok in tokenized_phrase:
+            if tok in self.term_scores:
+                score += self.term_scores[tok]
+        score = score/len(tokenized_phrase)
+        return score*l_imp
 
-		exclusive_nonlegal_tokens = list(set(self.nonlegalcf.keys()) - set(self.legalcf.keys()))
-		exclusive_legal_tokens = list(set(self.legalcf.keys())- set(self.nonlegalcf.keys()))
-		for tkn in exclusive_nonlegal_tokens:
-			self.legalcf[tkn]=0
-			self.legalidf[tkn]=0
-		for tkn in exclusive_legal_tokens:
-			self.nonlegalcf[tkn]=0
-			self.nonlegalidf[tkn]=0
-		print ('\nstarted calculating domain_specific_importances...')
-		ctr=1
-		cf_start_time = timeit.default_timer()
-		vocabsize = len(self.legalidf.keys())
-		for term in self.legalidf.keys():
-			sys.stdout.write('\r')
-			sys.stdout.write('DSI for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
-			sys.stdout.flush()
-			ctr+=1
-			if self.ver==1:
-				self.domain_specific_importance[term] = (1 + math.log1p((self.legalidf[term] * self.legalcf[term]) / (self.nonlegalcf[term] * self.nonlegalidf[term] + 1)))
-			elif self.ver==2:
-				self.domain_specific_importance[term] = (1 + math.log1p(self.legalcf[term])*self.legalidf[term]) /   (1.0+math.log1p(self.nonlegalcf[term])*self.nonlegalidf[term])
-		return
+    def fit(self, legal_tokenized_documents, nonlegal_tokenized_documents):
+        print ('\nstarted calculating legal frequencies...')
+        (self.legalidf , self.legalcf ) = self.calculate_frequencies(legal_tokenized_documents, normalize=True)
+        print ('\nstarted calculating nonlegal frequencies...')
+        (self.nonlegalidf , self.nonlegalcf ) = self.calculate_frequencies(nonlegal_tokenized_documents, normalize=True)
 
-	def fit_legal(self, legal_tokenized_documents):
-		self.start_time = timeit.default_timer()
-		print ('\nstarted calculating legal frequencies...')
-		(self.legalidf , self.legalcf ) = self.calculate_frequencies(legal_tokenized_documents, normalize=True)
-		exclusive_nonlegal_tokens = list(set(self.nonlegalcf.keys()) - set(self.legalcf.keys()))
-		exclusive_legal_tokens = list(set(self.legalcf.keys())- set(self.nonlegalcf.keys()))
-		for tkn in exclusive_nonlegal_tokens:
-			self.legalcf[tkn]=0
-			self.legalidf[tkn]=0
-		for tkn in exclusive_legal_tokens:
-			self.nonlegalcf[tkn]=0
-			self.nonlegalidf[tkn]=0
-		print ('\nstarted calculating domain_specific_importances...')
-		ctr=1
-		cf_start_time = timeit.default_timer()
-		vocabsize = len(self.legalidf.keys())
-		for term in self.legalidf.keys():
-			sys.stdout.write('\r')
-			sys.stdout.write('DSI for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
-			sys.stdout.flush()
-			ctr+=1
-			if self.ver==1:
-				self.domain_specific_importance[term] = (1 + math.log1p((self.legalidf[term] * self.legalcf[term]) / (self.nonlegalcf[term] * self.nonlegalidf[term] + 1)))
-			elif self.ver==2:
-				self.domain_specific_importance[term] = (1 + math.log1p(self.legalcf[term])*self.legalidf[term]) /   (1.0+math.log1p(self.nonlegalcf[term])*self.nonlegalidf[term])
-		return
+        exclusive_nonlegal_tokens = list(set(self.nonlegalcf.keys()) - set(self.legalcf.keys()))
+        exclusive_legal_tokens = list(set(self.legalcf.keys())- set(self.nonlegalcf.keys()))
+        for tkn in exclusive_nonlegal_tokens:
+            self.legalcf[tkn]=0
+            self.legalidf[tkn]=0
+        for tkn in exclusive_legal_tokens:
+            self.nonlegalcf[tkn]=0
+            self.nonlegalidf[tkn]=0
+        print ('\nstarted calculating domain_specific_importances...')
+        ctr=1
+        cf_start_time = timeit.default_timer()
+        vocabsize = len(self.legalidf.keys())
+        for term in self.legalidf.keys():
+            sys.stdout.write('\r')
+            sys.stdout.write('DSI for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
+            sys.stdout.flush()
+            ctr+=1
+            if self.ver==1:
+                self.domain_specific_importance[term] = (1 + math.log1p((self.legalidf[term] * self.legalcf[term]) / (self.nonlegalcf[term] * self.nonlegalidf[term] + 1)))
+            elif self.ver==2:
+                self.domain_specific_importance[term] = (1 + math.log1p(self.legalcf[term])*self.legalidf[term]) /   (1.0+math.log1p(self.nonlegalcf[term])*self.nonlegalidf[term])
+        return
+
+    def efficient_fit(self, legal_docs_folder, nonlegal_docs_folder,gram=1):
+        legal_tokenized_documents = []
+        nonlegal_tokenized_documents = []
+        legal_flist = os.listdir(legal_docs_folder)
+        nonlegal_flist = os.listdir(nonlegal_docs_folder)
+        ctr=1
+        sub_time = timeit.default_timer()
+        for legalfn in legal_flist:
+            with open(os.path.join(legal_docs_folder,legalfn), encoding="iso 8859-15") as lfp:
+                text = lfp.read()
+            if type(gram)==type(0):
+                toks = sentencify.get_ngrams(text,gram=gram)
+            elif(gram=='nnp'):
+                toks = npe.extract(text)
+            self.update_frequencies(toks, mode='legal', normalize=True)
+            sys.stdout.write('\r')
+            sys.stdout.write('Calculating legal CF and IDF '+str((ctr*100.0)/len(legal_flist))[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - sub_time)/60) / ctr) * (len(legal_flist)-ctr))[:5]+'  minutes)    ')
+            sys.stdout.flush()
+            ctr+=1
+        ctr=1
+        sub_time = timeit.default_timer()
+        for nonlegalfn in nonlegal_flist:
+            with open(os.path.join(nonlegal_docs_folder,nonlegalfn)) as lfp:
+                text = lfp.read()
+            if type(gram)==type(0):
+                toks = sentencify.get_ngrams(text,gram=gram)
+            elif(gram=='nnp'):
+                toks = npe.extract(text)
+            self.update_frequencies(toks, mode='nonlegal', normalize=True)
+            sys.stdout.write('\r')
+            sys.stdout.write('Calculating non-legal CF and IDF '+str((ctr*100.0)/len(nonlegal_flist))[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - sub_time)/60) / ctr) * (len(nonlegal_flist)-ctr))[:5]+'  minutes)    ')
+            sys.stdout.flush()
+            ctr+=1
+        # print ('\nstarted calculating legal frequencies...')
+        # (self.legalidf , self.legalcf ) = self.calculate_frequencies(legal_tokenized_documents, normalize=True)
+        # print ('\nstarted calculating nonlegal frequencies...')
+        # (self.nonlegalidf , self.nonlegalcf ) = self.calculate_frequencies(nonlegal_tokenized_documents, normalize=True)
+
+        exclusive_nonlegal_tokens = list(set(self.nonlegalcf.keys()) - set(self.legalcf.keys()))
+        exclusive_legal_tokens = list(set(self.legalcf.keys())- set(self.nonlegalcf.keys()))
+        for tkn in exclusive_nonlegal_tokens:
+            self.legalcf[tkn]=0
+            self.legalidf[tkn]=0
+            self.legaldf[tkn]=1
+        for tkn in exclusive_legal_tokens:
+            self.nonlegalcf[tkn]=0
+            self.nonlegalidf[tkn]=0
+            self.nonlegaldf[tkn]=1
+
+        for each in self.legaldf:
+            self.legalidf[each] = 1 + math.log1p(len(legal_flist)/(self.legaldf[each]))
+        for each in self.nonlegaldf:
+            self.nonlegalidf[each] = 1 + math.log1p(len(nonlegal_flist)/(self.nonlegaldf[each]))
+
+        if True: # NORMALIZATION of CFs
+            for each in self.legalcf:
+                self.legalcf[each] = self.legalcf[each]/len(legal_flist)
+            for each in self.nonlegalcf:
+                self.nonlegalcf[each] = self.nonlegalcf[each]/len(nonlegal_flist)
+
+        print ('\nstarted calculating domain_specific_importances...')
+        ctr=1
+        cf_start_time = timeit.default_timer()
+        vocabsize = len(self.legalcf.keys())
+        for term in self.legalcf.keys():
+            sys.stdout.write('\r')
+            sys.stdout.write('DSI for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
+            sys.stdout.flush()
+            ctr+=1
+            if self.ver==1:
+                self.domain_specific_importance[term] = (1 + math.log1p((self.legalidf[term] * self.legalcf[term]) / (self.nonlegalcf[term] * self.nonlegalidf[term] + 1)))
+            elif self.ver==2:
+                self.domain_specific_importance[term] = (1 + math.log1p(self.legalcf[term])*self.legalidf[term]) /   (1.0+math.log1p(self.nonlegalcf[term])*self.nonlegalidf[term])
+        return
+
+    def fit_legal(self, legal_tokenized_documents):
+        self.start_time = timeit.default_timer()
+        print ('\nstarted calculating legal frequencies...')
+        (self.legalidf , self.legalcf ) = self.calculate_frequencies(legal_tokenized_documents, normalize=True)
+        exclusive_nonlegal_tokens = list(set(self.nonlegalcf.keys()) - set(self.legalcf.keys()))
+        exclusive_legal_tokens = list(set(self.legalcf.keys())- set(self.nonlegalcf.keys()))
+        for tkn in exclusive_nonlegal_tokens:
+            self.legalcf[tkn]=0
+            self.legalidf[tkn]=0
+        for tkn in exclusive_legal_tokens:
+            self.nonlegalcf[tkn]=0
+            self.nonlegalidf[tkn]=0
+        print ('\nstarted calculating domain_specific_importances...')
+        ctr=1
+        cf_start_time = timeit.default_timer()
+        vocabsize = len(self.legalidf.keys())
+        for term in self.legalidf.keys():
+            sys.stdout.write('\r')
+            sys.stdout.write('DSI for '+str(ctr)+' token out of '+str(vocabsize)+'   '+str((ctr*100.0)/vocabsize)[:6]+'% done  (Time elapsed = '+str(float(timeit.default_timer() - start_time)/60)[:5]+'  minutes)   (ETA = '+str((float((timeit.default_timer() - cf_start_time)/60) / ctr) * (vocabsize-ctr))[:5]+'  minutes)')
+            sys.stdout.flush()
+            ctr+=1
+            if self.ver==1:
+                self.domain_specific_importance[term] = (1 + math.log1p((self.legalidf[term] * self.legalcf[term]) / (self.nonlegalcf[term] * self.nonlegalidf[term] + 1)))
+            elif self.ver==2:
+                self.domain_specific_importance[term] = (1 + math.log1p(self.legalcf[term])*self.legalidf[term]) /   (1.0+math.log1p(self.nonlegalcf[term])*self.nonlegalidf[term])
+        return
