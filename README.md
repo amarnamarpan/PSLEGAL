@@ -3,7 +3,7 @@ Clone the repository or download as zip archive and extract into current working
 ## 1. Using the pre-trained model
 To download the pre-trained model [click and visit this link](https://app.box.com/s/yc4mlxjzlmvnn5ogqq1ygsh0nddii6ql).
 Once downloaded you can extract it to get a file named "saved_model".
-Once extracted you can use the code example.py to detect catchphrases from the given document file named "example_document.txt". The saved model is trained to score noun phrases for a given document. For ease of use, we have included the noun phrase extractor itself within this repo. So that it can be used to extract noun phrases for any document. It is neccesary to use the same noun phrases extractor both during training and prediction.
+Once extracted you can use the code example.py to detect catchphrases from the given document file named "example_doc.txt". The saved model is trained to score noun phrases for a given document. For ease of use, we have included the noun phrase extractor itself within this repo. So that it can be used to extract noun phrases for any document. It is neccesary to use the same noun phrases extractor both during training and prediction.
 The saved model can be readily used to extract catchphrases from given documents. The related code is described under heading '4'.
 ## 2. To train a new model
 The model first needs a text corpus to be trained upon.
