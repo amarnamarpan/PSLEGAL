@@ -1431,6 +1431,7 @@ class PSlegalVectorizer:
         return
 
     def efficient_fit(self, legal_docs_folder, nonlegal_docs_folder,gram=1):
+        # The value of gram can either be 'nnp' or some integer n representing the n-gram tokenization.
         legal_tokenized_documents = []
         nonlegal_tokenized_documents = []
         legal_flist = os.listdir(legal_docs_folder)
