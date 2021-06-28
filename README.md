@@ -24,8 +24,10 @@ nonlegal_tokenized_documents = [['the','data','is','organized','into','20','diff
 
 psvectorizer = psl.PSlegalVectorizer()
 psvectorizer.fit(self, legal_tokenized_documents, nonlegal_tokenized_documents)
+
 # if the above code shows memory problems then it can be trained in a more memory efficient manner
-# at the cost of a slower training process
+# at the cost of a slightly slower training process as follows
+psvectorizer.efficient_fit(self, legal_documents_folder, nonlegal_documents_folder, gram='nnp')
 ```
 Please note that pslegal is a scoring function. It does score the words/noun-phrases presented to it. 
 NOTE: To score noun phrases you need to provide noun phrases instead of tokenized words to the algorithm. To do so, we pass the following two lists as shown:
