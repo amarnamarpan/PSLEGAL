@@ -69,5 +69,5 @@ vector = psvectorizer.transform(tokenized_documents)
 
 ## Reference
 Thank you for using this implementation in your work, please cite our original paper:
-[Automatic Catchphrase Identification from Legal Court Case Documents, by A Mandal, K Ghosh, A Pal, S Ghosh at CIKM, 2017](https://dl.acm.org/doi/10.1145/3132847.3133102)
+["A Sequence Labeling Model for Catchphrase Identification from Legal Case Documents", A. Mandal, K. Ghosh, S. Ghosh, S. Mandal, 2021, Journal of Artificial Intelligence and Law.](https://www.springer.com/journal/10506)
 
