@@ -30,7 +30,7 @@ psvectorizer.fit(self, legal_tokenized_documents, nonlegal_tokenized_documents)
 psvectorizer.efficient_fit(self, legal_documents_folder, nonlegal_documents_folder, gram='nnp')
 ```
 Please note that pslegal is a scoring function. It does score the words/noun-phrases presented to it. 
-NOTE: To score noun phrases you need to provide noun phrases instead of tokenized words to the algorithm. To do so, we pass the following two lists as shown:
+NOTE: To score noun phrases you need to provide noun phrases instead of tokenized words to the algorithm. To do so, we either pass the 'nnp' value to the positional argument gram to the method named 'efficient_fit()'. or if we use the 'fit()' method then, we pass the following two lists as shown:
 For example,
 
 ```python
